@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: solr-search-workflow
+spec:
+  serviceAccountName: builder
+  entrypoint: cicd
+  arguments:
+    parameters:
+      - name: repo
+        value: comes-from-sensor-trigger
+      - name: revision
+        value: comes-from-sensor-trigger
+      - name: reponame
+        value: comes-from-sensor-trigger
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        resources:
+          requests:
+            storage: 500M
+        accessModes: [ "ReadWriteOnce" ]
+  templates:
+    - name: cicd
+      steps:
+        - - name: parse-branch-and-namespace
+            template: parse-branch-and-namespace
+        - - name: git-checkout
+            template: git-checkout
+            arguments:
+              parameters:
+                - name: branch
+                  value: "{{ steps.parse-branch-and-namespace.outputs.parameters.branch }}"
+        - - name: extract-image-tag
+            template: extract-image-tag
+        - - name: mvn-build-jar
+            template: mvn-build-jar
+        - - name: image-build-push
+            template: image-build-push
+            arguments:
+              parameters:
+                - name: tag
+                  value: "{{ steps.extract-image-tag.outputs.parameters.image-tag }}"
+                - name: namespace
+                  value: "{{ steps.parse-information.outputs.parameters.namespace }}"
+        - - name: update-version-in-git
+            template: update-version-in-git
+            arguments:
+              parameters:
+                - name: tag
+                  value: "{{ steps.extract-image-tag.outputs.parameters.image-tag }}"
