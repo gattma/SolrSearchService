@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: git-checkout
+spec:
+  templates:
+    - name: git-checkout
+      inputs:
+        parameters:
+          - name: branch
+      metadata:
+        labels:
+          app: argo
+      container:
+        image: alpine/git
+        name: git
+        command: [ sh, -c ]
+        args: [ "cd /mnt/out/ && git clone {{ workflow.parameters.repo }} && cd  {{ workflow.parameters.reponame }} && git checkout  {{ inputs.parameters.branch }}" ]
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/out/

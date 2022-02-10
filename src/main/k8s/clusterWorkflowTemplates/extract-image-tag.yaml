@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: extract-image-tag
+spec:
+  templates:
+    - name: extract-image-tag
+      metadata:
+        labels:
+          app: argo
+      container:
+        image: alpine/git
+        name: git
+        command: [ sh, -c ]
+        args: [ "cd /mnt/out/{{ workflow.parameters.reponame }} && git rev-parse --short HEAD > ../git-commit" ]
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/out/
+      outputs:
+        parameters:
+          - name: image-tag
+            valueFrom:
+              path: /mnt/out/git-commit

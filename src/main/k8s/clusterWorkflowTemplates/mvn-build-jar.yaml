@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: mvn-build-jar
+spec:
+  templates:
+    - name: mvn-build-jar
+      metadata:
+        labels:
+          app: argo
+      container:
+        image: "maven:3.8.4-jdk-11"
+        command: [ sh, -c ]
+        args: [ "cd /mnt/out/weckdengeparden/ && mvn clean package" ]
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/out/
